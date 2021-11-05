@@ -71,36 +71,30 @@ const buildPrefix = (level) => {
 };
 
 const getValue = (value, dataField, defaultValue) => {
-  return !dataField ? value : get(value, dataField, defaultValue);
+  const correctedDataField = dataField.replaceAll('..', '');
+  return get(value, correctedDataField, defaultValue);
 };
 
-const mergeLayoutData = (level, layout, data, parentField = [], fromRootParentField = []) => {
+const mergeLayoutData = (level, layout, data, parentField = []) => {
   const prefix = buildPrefix(level);
 
   const {component, data_field, items = []} = layout;
   let [dataField, dataFieldType] = data_field.split(':');
 
-  if (dataField === '.') {
-    dataField = false;
+  if (!dataField) {
+    dataField = '.';
   }
 
-  const currentPath = [...parentField];
-  const currentFromParentPath = [...fromRootParentField];
-  if (dataField) {
-    currentPath.push(dataField);
-    currentFromParentPath.push(dataField);
-  }
+  const currentPath = [...parentField, dataField];
 
   const fullDataField = currentPath.join('.');
+
   const value = getValue(data, fullDataField);
+  //const value = data;
 
   let passDownValue = data;
-  if (!dataField) {
-    passDownValue = value;
-  }
 
   layout.full_data_field = fullDataField;
-  layout.root_data_field = currentFromParentPath.join('.');
   layout.value = value;
 
   console.log(prefix, component, '>', fullDataField, value);
@@ -117,14 +111,40 @@ const mergeLayoutData = (level, layout, data, parentField = [], fromRootParentFi
     }, []);
 
     Object.assign(items, newItems);
-
   }
+
   items.forEach((item, idx) => {
-    mergeLayoutData(level + 1, item, passDownValue, dataField ? currentPath : [], currentPath);
+    mergeLayoutData(level + 1, item, passDownValue, dataField ? currentPath : []);
   });
   return layout;
 };
 
 //const newLayout = JSON.parse(JSON.stringify(layout));
 const newLayout = mergeLayoutData(1, JSON.parse(JSON.stringify(layout)), data);
-console.log(newLayout);
+
+
+/* output
+page > . undefined
+  top_section > ..top {logo: 'path-to-logo.png'}
+    logo > ..top.logo path-to-logo.png
+  middle_section > ..content {mainImage: 'main-image.png', altImage: 'alt-image.png', article: {…}}
+    pic1 > ..content.mainImage main-image.png
+    pic2 > ..content.altImage alt-image.png
+    section > ..content.article {a: 1, b: 2, sub_title: 'My Sub Title'}
+      sub_section > ..content.article.. {a: 1, b: 2, sub_title: 'My Sub Title'}
+        title > ..content.article...sub_title My Sub Title
+  footer_section > ..bottom {links: Array(3)}
+    left_side > ..bottom.links (3) [{…}, {…}, {…}]
+      my-comp > ..bottom.links.0 {label: 'AAA', url: '.com/aaa'}
+        link-label > ..bottom.links.0.label AAA
+        note-url > ..bottom.links.0.url .com/aaa
+        link-item > ..bottom.links.0.. {label: 'AAA', url: '.com/aaa'}
+      my-comp > ..bottom.links.1 {label: 'BBB', url: '.com/bbb'}
+        link-label > ..bottom.links.1.label BBB
+        note-url > ..bottom.links.1.url .com/bbb
+        link-item > ..bottom.links.1.. {label: 'BBB', url: '.com/bbb'}
+      my-comp > ..bottom.links.2 {label: 'CCC', url: '.com/ccc'}
+        link-label > ..bottom.links.2.label CCC
+        note-url > ..bottom.links.2.url .com/ccc
+        link-item > ..bottom.links.2.. {label: 'CCC', url: '.com/ccc'}
+*/
