@@ -2,26 +2,24 @@ import {get} from 'lodash';
 
 console.clear();
 
-//{component: '', data_field: '', items: []}
-
 const layout = {
   component: 'page',
-  data_field: '.',
+  field: '.',
   items: [
     {
-      component: 'top_section', data_field: 'top', items: [
-        {component: 'logo', data_field: 'logo'}
+      component: 'top_section', field: 'top', items: [
+        {component: 'logo', field: 'logo'}
       ]
     },
     {
-      component: 'middle_section', data_field: 'content', items: [
-        {component: 'pic1', data_field: 'mainImage'},
-        {component: 'pic2', data_field: 'altImage'},
+      component: 'middle_section', field: 'content', items: [
+        {component: 'pic1', field: 'mainImage'},
+        {component: 'pic2', field: 'altImage'},
         {
-          component: 'section', data_field: 'article', items: [
+          component: 'section', field: 'article', items: [
             {
-              component: 'sub_section', data_field: '.', items: [
-                {component: 'title', data_field: 'sub_title'}
+              component: 'sub_section', field: '.', items: [
+                {component: 'title', field: 'sub_title'}
               ]
             }
           ]
@@ -29,14 +27,16 @@ const layout = {
       ]
     },
     {
-      component: 'footer_section', data_field: 'bottom', items: [
+      component: 'footer_section', field: 'bottom', items: [
         {
-          component: 'left_side', data_field: 'links:array', items: [
-            {component: 'my-comp', data_field: '.', items: [
-                {component: 'link-label', data_field: 'label', items: []},
-                {component: 'note-url', data_field: 'url', items: []},
-                {component: 'link-item', data_field: '.', items: []},
-            ]}
+          component: 'left_side', field: 'links:array', items: [
+            {
+              component: 'my-comp', field: '.', items: [
+                {component: 'link-label', field: 'label', items: []},
+                {component: 'note-url', field: 'url', items: []},
+                {component: 'link-item', field: '.', items: []},
+              ]
+            }
           ]
         }
       ]
@@ -62,89 +62,139 @@ const data = {
   }
 };
 
-const buildPrefix = (level) => {
+const buildPrefix = (level, token = '  ') => {
   const arr = [];
   for (let i = 0; i < level; i++) {
-    arr.push('  ');
+    arr.push(token);
   }
   return arr.join('');
 };
 
-const getValue = (value, dataField, defaultValue) => {
-  const correctedDataField = dataField.replaceAll('..', '');
-  return get(value, correctedDataField, defaultValue);
+const createGetCleanPathFn = () => {
+  const removeDoubleDot = input => input.replace(/\.+/g, '.');
+  const removeLeadingTrailingDot = input => input.replace(/^\.+|\.+$/g, '');
+
+  return (input) => removeDoubleDot(removeLeadingTrailingDot(input));
 };
 
-const mergeLayoutData = (level, layout, data, parentField = []) => {
-  const prefix = buildPrefix(level);
+const getEnhancedDataPath = createGetCleanPathFn();
 
-  const {component, data_field, items = []} = layout;
-  let [dataField, dataFieldType] = data_field.split(':');
+const getValue = (value, dataField, defaultValue) => {
+  return dataField ? get(value, dataField, defaultValue) : value;
+};
+
+const enhanceDataField = (parentPath = [], currentField) => {
+
+  let [dataField, dataFieldType] = currentField.split(':');
 
   if (!dataField) {
     dataField = '.';
   }
 
-  const currentPath = [...parentField, dataField];
+  const currentPath = [...parentPath, dataField];
 
   const fullDataField = currentPath.join('.');
+  const dataFieldPath = getEnhancedDataPath(fullDataField);
 
-  const value = getValue(data, fullDataField);
-  //const value = data;
+  return {
+    isArrayField: dataFieldType === 'array',
+    original: currentField,
+    arbitrary: fullDataField,
+    full: dataFieldPath,
+    currentPath
+  }
+};
 
-  let passDownValue = data;
+const withData = (layout, data, parentField = []) => {
+  const prefix = buildPrefix(parentField.length);
 
-  layout.full_data_field = fullDataField;
-  layout.value = value;
+  const {component, field: cmsField, items: cmsChildren = [], config = {}} = layout;
 
-  console.log(prefix, component, '>', fullDataField, value);
+  const {currentPath, ...path} = enhanceDataField(parentField, cmsField);
 
-  if (dataFieldType === 'array') {
-    const newItems = value.reduce((p,arrItemData, idx) => {
-       const a = items.map(({...item}) => {
-         const {data_field: df} = item;
-         const _df = df === '.' ? `${idx}` : `${idx}.${df}`;
-        item.data_field = _df;
+  const value = getValue(data, path.full);
+
+  console.log(prefix, component, '>', path.arbitrary, ':', path.full, value);
+  let items = cmsChildren;
+  if (path.isArrayField) {
+    const tempChildren = value.reduce((p, arrItemData, idx) => {
+      const a = cmsChildren.map(({...item}) => {
+        const {field: df} = item;
+        const _df = df === '.' ? `${idx}` : `${idx}.${df}`;
+        item.field = _df;
         return item;
       });
-       return [...p, ...a];
+      return [...p, ...a];
     }, []);
 
-    Object.assign(items, newItems);
+    Object.assign(items, tempChildren);
   }
 
-  items.forEach((item, idx) => {
-    mergeLayoutData(level + 1, item, passDownValue, dataField ? currentPath : []);
+  items = cmsChildren.map((item, idx) => {
+    return withData(item, data, currentPath, parentField.length + 1);
+  });
+
+  return {
+    component,
+    config: {...config},
+    field: path.full,
+    items,
+    value,
+    extra: {
+      path,
+      cms: {
+        field: cmsField,
+        config
+      }
+    }
+  };
+};
+
+const withConfig = (layout, rules, rootValue = {}, level) => {
+  const {component, field: dataField, value, items = []} = layout;
+  if (!level) {
+    rootValue = value;
+  }
+
+  const prefix = buildPrefix(level);
+
+  //const dataField = getEnhancedDataPath(fullDataField);
+
+  console.log(prefix, component, '>', dataField, '→', getEnhancedDataPath(dataField));
+
+  let effects = rules[dataField];
+  if (effects) {
+    effects = Array.isArray(effects) ? effects : [effects];
+    effects.forEach(effect => effect(rootValue, value, layout));
+  }
+  items.forEach((item) => {
+    withConfig(item, rules, rootValue, level ? level + 1 : 1);
   });
   return layout;
 };
 
+const configRules = {
+  'top.logo': (rootValue, value, layout) => {
+    const {component} = layout;
+    console.log('[ effect ] :', component, '→', value);
+    layout.config.hide = true;
+    return {hide: true};
+  },
+  'bottom.links': (rootValue, value, layout) => {
+    const {component} = layout;
+    console.log('[ effect ] :', component, '→', value);
+    if (!layout.meta_data) {
+      layout.meta_data = {};
+    }
+    layout.meta_data.hide = true;
+    return {hide: true};
+  }
+};
+
 //const newLayout = JSON.parse(JSON.stringify(layout));
-const newLayout = mergeLayoutData(1, JSON.parse(JSON.stringify(layout)), data);
+const newLayout = withData(JSON.parse(JSON.stringify(layout)), data);
+//console.clear();
+console.log(newLayout);
 
-
-/* output
-page > . undefined
-  top_section > ..top {logo: 'path-to-logo.png'}
-    logo > ..top.logo path-to-logo.png
-  middle_section > ..content {mainImage: 'main-image.png', altImage: 'alt-image.png', article: {…}}
-    pic1 > ..content.mainImage main-image.png
-    pic2 > ..content.altImage alt-image.png
-    section > ..content.article {a: 1, b: 2, sub_title: 'My Sub Title'}
-      sub_section > ..content.article.. {a: 1, b: 2, sub_title: 'My Sub Title'}
-        title > ..content.article...sub_title My Sub Title
-  footer_section > ..bottom {links: Array(3)}
-    left_side > ..bottom.links (3) [{…}, {…}, {…}]
-      my-comp > ..bottom.links.0 {label: 'AAA', url: '.com/aaa'}
-        link-label > ..bottom.links.0.label AAA
-        note-url > ..bottom.links.0.url .com/aaa
-        link-item > ..bottom.links.0.. {label: 'AAA', url: '.com/aaa'}
-      my-comp > ..bottom.links.1 {label: 'BBB', url: '.com/bbb'}
-        link-label > ..bottom.links.1.label BBB
-        note-url > ..bottom.links.1.url .com/bbb
-        link-item > ..bottom.links.1.. {label: 'BBB', url: '.com/bbb'}
-      my-comp > ..bottom.links.2 {label: 'CCC', url: '.com/ccc'}
-        link-label > ..bottom.links.2.label CCC
-        note-url > ..bottom.links.2.url .com/ccc
-        link-item > ..bottom.links.2.. {label: 'CCC', url: '.com/ccc'}
-*/
+const layoutWithEffect = withConfig(newLayout, configRules);
+console.log(layoutWithEffect);
