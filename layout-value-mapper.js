@@ -198,3 +198,70 @@ console.log(newLayout);
 
 const layoutWithEffect = withConfig(newLayout, configRules);
 console.log(layoutWithEffect);
+
+
+
+/* output
+{
+  component:"page",config:{},field:"",
+  items:[{
+    component:"top_section",config:{},field:"top",
+    items:[
+      {component:"logo",config:{hide:true},field:"top.logo",items:[],value:"path-to-logo.png", // <= config rull set hide: true
+        extra:{path:{isArrayField:false,original:"logo",arbitrary:"..top.logo",full:"top.logo"},
+          cms:{field:"logo",config:{}}}}],value:{logo:"path-to-logo.png"},
+    extra:{path:{isArrayField:false,original:"top",arbitrary:"..top",full:"top"},
+      cms:{field:"top",config:{}}}},
+    {component:"middle_section",config:{},field:"content",items:[
+      {component:"pic1",config:{},field:"content.mainImage",items:[],value:"main-image.png",
+        extra:{path:{isArrayField:false,original:"mainImage",arbitrary:"..content.mainImage",full:"content.mainImage"},
+          cms:{field:"mainImage",config:{}}}},
+        {component:"pic2",config:{},field:"content.altImage",items:[],value:"alt-image.png",
+          extra:{path:{isArrayField:false,original:"altImage",arbitrary:"..content.altImage",full:"content.altImage"},
+            cms:{field:"altImage",config:{}}}},
+        {component:"section",config:{},field:"content.article",items:[
+          {component:"sub_section",config:{},field:"content.article",items:[
+            {component:"title",config:{},field:"content.article.sub_title",items:[],value:"My Sub Title",
+              extra:{path:{isArrayField:false,original:"sub_title",arbitrary:"..content.article...sub_title",full:"content.article.sub_title"},
+                cms:{field:"sub_title",config:{}}}}],value:{a:1,b:2,sub_title:"My Sub Title"},
+            extra:{path:{isArrayField:false,original:".",arbitrary:"..content.article..",full:"content.article"},
+              cms:{field:".",config:{}}}}],value:{a:1,b:2,sub_title:"My Sub Title"},
+          extra:{path:{isArrayField:false,original:"article",arbitrary:"..content.article",full:"content.article"},
+            cms:{field:"article",config:{}}}}],value:{mainImage:"main-image.png",altImage:"alt-image.png",article:{a:1,b:2,sub_title:"My Sub Title"}},
+      extra:{path:{isArrayField:false,original:"content",arbitrary:"..content",full:"content"},
+        cms:{field:"content",config:{}}}},
+    {component:"footer_section",config:{},field:"bottom",items:[
+      {component:"left_side",config:{},field:"bottom.links",items:[
+        {component:"my-comp",config:{},field:"bottom.links.0",items:[ // <= 3 navigations items (1 of 3)
+          {component:"link-label",config:{},field:"bottom.links.0.label",items:[],value:"AAA",
+            extra:{path:{isArrayField:false,original:"label",arbitrary:"..bottom.links.0.label",full:"bottom.links.0.label"},
+              cms:{field:"label",config:{}}}},
+            {component:"note-url",config:{},field:"bottom.links.0.url",items:[],value:".com/aaa",
+              extra:{path:{isArrayField:false,original:"url",arbitrary:"..bottom.links.0.url",full:"bottom.links.0.url"},cms:{field:"url",config:{}}}},
+            {component:"link-item",config:{},field:"bottom.links.0",items:[],value:{label:"AAA",url:".com/aaa"},extra:{path:{isArrayField:false,original:".",arbitrary:"..bottom.links.0..",full:"bottom.links.0"},cms:{field:".",config:{}}}}],value:{label:"AAA",url:".com/aaa"},extra:{path:{isArrayField:false,original:"0",arbitrary:"..bottom.links.0",full:"bottom.links.0"},cms:{field:"0",config:{}}}},
+          {component:"my-comp",config:{},field:"bottom.links.1",items:[  // <= 3 navigations items (2 of 3)
+            {component:"link-label",config:{},field:"bottom.links.1.label",items:[],value:"BBB",
+              extra:{path:{isArrayField:false,original:"label",arbitrary:"..bottom.links.1.label",full:"bottom.links.1.label"},cms:{field:"label",config:{}}}},
+              {component:"note-url",config:{},field:"bottom.links.1.url",items:[],value:".com/bbb",
+                extra:{path:{isArrayField:false,original:"url",arbitrary:"..bottom.links.1.url",full:"bottom.links.1.url"},cms:{field:"url",config:{}}}},
+              {component:"link-item",config:{},field:"bottom.links.1",items:[],value:{label:"BBB",url:".com/bbb"},extra:{path:{isArrayField:false,original:".",arbitrary:"..bottom.links.1..",full:"bottom.links.1"},cms:{field:".",config:{}}}}],value:{label:"BBB",url:".com/bbb"},extra:{path:{isArrayField:false,original:"1",arbitrary:"..bottom.links.1",full:"bottom.links.1"},cms:{field:"1",config:{}}}},
+          {component:"my-comp",config:{},field:"bottom.links.2",items:[
+            {component:"link-label",config:{},field:"bottom.links.2.label",items:[],value:"CCC",
+              extra:{path:{isArrayField:false,original:"label",arbitrary:"..bottom.links.2.label",full:"bottom.links.2.label"},cms:{field:"label",config:{}}}},
+              {component:"note-url",config:{},field:"bottom.links.2.url",items:[],value:".com/ccc",
+                extra:{path:{isArrayField:false,original:"url",arbitrary:"..bottom.links.2.url",full:"bottom.links.2.url"},cms:{field:"url",config:{}}}},
+              {component:"link-item",config:{},field:"bottom.links.2",items:[],  // <= 3 navigations items (3 of 3)
+                value:{label:"CCC",url:".com/ccc"},
+                extra:{path:{isArrayField:false,original:".",arbitrary:"..bottom.links.2..",full:"bottom.links.2"},
+                  cms:{field:".",config:{}}}}],value:{label:"CCC",url:".com/ccc"},
+            extra:{path:{isArrayField:false,original:"2",arbitrary:"..bottom.links.2",full:"bottom.links.2"},
+              cms:{field:"2",config:{}}}}],value:[{label:"AAA",url:".com/aaa"},{label:"BBB",url:".com/bbb"},{label:"CCC",url:".com/ccc"}],
+        extra:{path:{isArrayField:true,original:"links:array",arbitrary:"..bottom.links",full:"bottom.links"},
+          cms:{field:"links:array",config:{}}},meta_data:{hide:true}}], // <= config rull set hide: true
+      value:{links:[{label:"AAA",url:".com/aaa"},{label:"BBB",url:".com/bbb"},{label:"CCC",url:".com/ccc"}]},
+      extra:{path:{isArrayField:false,original:"bottom",arbitrary:"..bottom",full:"bottom"},
+        cms:{field:"bottom",config:{}}}}],value:{top:{logo:"path-to-logo.png"},content:{mainImage:"main-image.png",altImage:"alt-image.png",article:{a:1,b:2,sub_title:"My Sub Title"}},bottom:{links:[{label:"AAA",url:".com/aaa"},{label:"BBB",url:".com/bbb"},{label:"CCC",url:".com/ccc"}]}},
+  extra:{path:{isArrayField:false,original:".",arbitrary:".",full:""},
+    cms:{field:".",config:{}}}
+};
+*/
