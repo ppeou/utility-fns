@@ -201,6 +201,41 @@ console.log(layoutWithEffect);
 
 
 
+/* input
+{
+  component: 'page',
+  field: '.',
+  items: [
+    {
+      component: 'top_section', field: 'top', items: [
+        {component: 'logo', field: 'logo'}
+      ]
+    },
+    {
+      component: 'middle_section', field: 'content', items: [
+        {component: 'pic1', field: 'mainImage'},
+        {component: 'pic2', field: 'altImage'},
+        {
+          component: 'section', field: 'article', items: [
+            {
+              component: 'sub_section', field: '.', items: [
+                {component: 'title', field: 'sub_title'}
+              ]}]},
+      ]},
+    {
+      component: 'footer_section', field: 'bottom', items: [
+        {
+          component: 'left_side', field: 'links:array', items: [
+            {
+              component: 'my-comp', field: '.', items: [
+                {component: 'link-label', field: 'label', items: []},
+                {component: 'note-url', field: 'url', items: []},
+                {component: 'link-item', field: '.', items: []},
+              ]}]
+        }]},
+  ]}
+ */
+
 /* output
 {
   component:"page",config:{},field:"",
