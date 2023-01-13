@@ -1,0 +1,74 @@
+const createStorage = (storageType, keyId, expireAfter) => {
+
+  const storage = window[storageType];
+
+  const toString = JSON.stringify;
+  const fromString = (v) => JSON.parse(v || '{}');
+  const _get = () => fromString(storage.getItem(keyId));
+
+  const hasZeroItem = (value) => Object.keys(value).length === 0;
+
+  const removeExpiredItems = () => {
+    let value = _get();
+    const now = new Date().getTime();
+    value = Object.entries(value).reduce((p, [id, item]) => {
+      if(item.expireOn && now < item.expireOn) {
+        p[id] = item;
+      }
+      return p;
+    }, {});
+
+    if(hasZeroItem(value)) {
+      storage.removeItem(keyId);
+    } else {
+      storage.setItem(keyId, toString(value));
+    }
+  };
+
+  const set = (id, value) => {
+    let expireOn = 0;
+    if(expireAfter) {
+      expireOn = new Date().getTime() + expireAfter;
+    }
+
+    const item = {[id]: { value, expireOn}};
+    const _value = toString(Object.assign({}, _get(), item));
+    storage.setItem(keyId, _value);
+  };
+
+  const get = (id) => {
+    const value = _get();
+    return value[id];
+  };
+
+  const has = (id) => {
+    const value = _get();
+    return value.hasOwnProperty(id);
+  };
+
+  const remove = (id) => {
+    const value = _get();
+    delete value[id];
+    if(hasZeroItem(value)) {
+      storage.removeItem(keyId);
+    } else {
+      storage.setItem(keyId, toString(value));
+    }
+  };
+
+
+  if(expireAfter) {
+    removeExpiredItems();
+  }
+
+  return {set, get, has, remove};
+};
+
+export {createStorage};
+
+//usage:
+
+const bannerTracker = createStorage('localStorage', 'critical-msg-banner', 30 * 1000);
+
+bannerTracker.set(id);
+bannerTracker.remove(id);
